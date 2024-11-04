@@ -62,6 +62,7 @@ function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, l
       data[i] += (compressed.data[j += 1] >>> (shift - 64)) & mask
       shift = shift + wordsize - 64
     elseif shift + wordsize == 64
+      j += 1
       shift = 0
     else
       shift += wordsize
