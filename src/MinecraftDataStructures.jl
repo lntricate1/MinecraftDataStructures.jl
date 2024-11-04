@@ -69,7 +69,8 @@ function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, l
     end
   end
   # TODO: find a way to directly set the PooledArray
-  return PooledArray(getindex(compressed.palette, data))
+  # return PooledArray(getindex(compressed.palette, data))
+  return PooledArray(PooledArrays.RefArray(data), Dict(b => UInt64(i) for (i, b) in enumerate(compressed.palette)), compressed.palette, Threads.Atomic{Int64}(1))
 end
 
 end
