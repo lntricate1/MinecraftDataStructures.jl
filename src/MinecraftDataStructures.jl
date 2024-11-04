@@ -15,6 +15,13 @@ struct BlockState <: AbstractBlockState
   properties::Vector{Pair{String, String}}
 end
 
+Base.:(==)(a::Block, b::Block) = a.id == b.id
+Base.:(==)(a::BlockState, b::BlockState) = a.id == b.id && a.properties == b.properties
+Base.isequal(a::Block, b::Block) = a.id == b.id
+Base.isequal(a::BlockState, b::BlockState) = a.id == b.id && a.properties == b.properties
+Base.hash(a::Block, h::UInt64) = hash(a.id, h)
+Base.hash(a::BlockState, h::UInt64) = hash(a.id, hash(a.properties, h))
+
 Base.zero(::Type{AbstractBlockState}) = Block("minecraft:air")
 Base.zero(::AbstractBlockState) = Block("minecraft:air")
 Base.zero(::Type{Block}) = Block("minecraft:air")
@@ -43,8 +50,8 @@ function CompressedPalettedContainer(uncompressed::PooledArray{<:AbstractBlockSt
     reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.refs for i in 0:wordsize - 1).chunks))
 end
 
-function PooledArray(compressed::CompressedPalettedContainer, len::Int)
-  wordsize = max(1, ceil(Int, log2(length(compressed.palette))))
+function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, len::Int)
+  wordsize = max(min_bits, ceil(Int, log2(length(compressed.palette))))
   data = ones(UInt64, len)
   shift = 0
   j = 1
