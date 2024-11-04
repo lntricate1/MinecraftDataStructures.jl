@@ -34,8 +34,8 @@ struct CompressedPalettedContainer{T}
   data::Array{Int64}
 end
 
-function CompressedPalettedContainer(uncompressed::IndirectArray{<:AbstractBlockState})
-  wordsize = ceil(Int, log2(length(uncompressed.values)))
+function CompressedPalettedContainer(uncompressed::IndirectArray{<:AbstractBlockState}, min_bits::Int64)
+  wordsize = max(min_bits, ceil(Int, log2(length(uncompressed.values))))
   CompressedPalettedContainer(uncompressed.values,
     reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.index for i in 0:wordsize - 1).chunks))
 end
