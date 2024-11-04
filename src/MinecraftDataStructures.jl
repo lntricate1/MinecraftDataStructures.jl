@@ -1,6 +1,6 @@
 module MinecraftDataStructures
 
-using IndirectArrays
+using PooledArrays
 
 export Block, BlockState, AbstractBlockState, CompressedPalettedContainer
 
@@ -29,18 +29,21 @@ Base.one(::Block) = Block("minecraft:stone")
 Base.one(::Type{BlockState}) = BlockState("minecraft:stone", Pair{String, String}[])
 Base.one(::BlockState) = BlockState("minecraft:stone", Pair{String, String}[])
 
+Base.show(io::IO, lr::Block) = print(io, split(lr.id, ":")[end])
+Base.show(io::IO, lr::BlockState) = print(io, split(lr.id, ":")[end])
+
 struct CompressedPalettedContainer{T}
   palette::Vector{T}
   data::Array{Int64}
 end
 
-function CompressedPalettedContainer(uncompressed::IndirectArray{<:AbstractBlockState}, min_bits::Int64)
-  wordsize = max(min_bits, ceil(Int, log2(length(uncompressed.values))))
-  CompressedPalettedContainer(uncompressed.values,
-    reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.index for i in 0:wordsize - 1).chunks))
+function CompressedPalettedContainer(uncompressed::PooledArray{<:AbstractBlockState}, min_bits::Int64)
+  wordsize = max(min_bits, ceil(Int, log2(length(uncompressed.pool))))
+  CompressedPalettedContainer(uncompressed.pool,
+    reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.refs for i in 0:wordsize - 1).chunks))
 end
 
-function IndirectArray(compressed::CompressedPalettedContainer, len::Int)
+function PooledArray(compressed::CompressedPalettedContainer, len::Int)
   wordsize = max(1, ceil(Int, log2(length(compressed.palette))))
   data = ones(UInt64, len)
   shift = 0
@@ -55,7 +58,7 @@ function IndirectArray(compressed::CompressedPalettedContainer, len::Int)
       shift += wordsize
     end
   end
-  return IndirectArray(data, compressed.palette)
+  return PooledArray(PooledArrays.RefArray(data), Dict(i => j for (i, j) in enumerate(compressed.palette)))
 end
 
 end
