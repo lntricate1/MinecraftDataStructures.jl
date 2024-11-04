@@ -3,7 +3,11 @@ uuid = "c8cd69f1-bc5f-4dbb-a861-15a5a68cdaf9"
 authors = ["contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+IndirectArrays = "9b13fd28-a010-5f03-acff-a1bbcff69959"
+
 [compat]
+IndirectArrays = "1.0.0"
 julia = "1.6.7"
 
 [extras]
