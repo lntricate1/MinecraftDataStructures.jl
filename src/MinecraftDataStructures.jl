@@ -58,7 +58,8 @@ function PooledArray(compressed::CompressedPalettedContainer, len::Int)
       shift += wordsize
     end
   end
-  return PooledArray(PooledArrays.RefArray(data), Dict(i => j for (i, j) in enumerate(compressed.palette)))
+  # TODO: find a way to directly set the PooledArray
+  return PooledArray(getindex(compressed.palette, data))
 end
 
 end
