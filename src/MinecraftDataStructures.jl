@@ -50,14 +50,14 @@ function CompressedPalettedContainer(uncompressed::PooledArray{<:AbstractBlockSt
     reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.refs for i in 0:wordsize - 1).chunks))
 end
 
-function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, len::Int)
+function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, size::NTuple{N, Int}) where N
   @inbounds begin
   wordsize = max(min_bits, ceil(Int, log2(length(compressed.palette))))
-  data = ones(UInt32, len)
+  data = ones(UInt32, size)
   shift = 0
   j = 1
   mask = 2^wordsize - 1
-  for i in 1:len
+  for i in 1:prod(size)
     data[i] += (compressed.data[j] >>> shift) & mask
     if shift + wordsize > 64
       data[i] += (compressed.data[j += 1] >>> (shift - 64)) & mask
