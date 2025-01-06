@@ -51,6 +51,7 @@ function CompressedPalettedContainer(uncompressed::PooledArray{<:AbstractBlockSt
 end
 
 function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, len::Int)
+  @inbounds begin
   wordsize = max(min_bits, ceil(Int, log2(length(compressed.palette))))
   data = ones(UInt32, len)
   shift = 0
@@ -69,8 +70,7 @@ function PooledArray(compressed::CompressedPalettedContainer, min_bits::Int64, l
     end
   end
   # TODO: find a way to directly set the PooledArray
-  # return PooledArray(getindex(compressed.palette, data))
   return PooledArray(PooledArrays.RefArray(data), Dict(b => UInt32(i) for (i, b) in enumerate(compressed.palette)), compressed.palette, Threads.Atomic{Int64}(1))
-end
+end end
 
 end
