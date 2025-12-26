@@ -5,11 +5,9 @@ authors = ["contributors"]
 
 [deps]
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-PooledArrays = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 
 [compat]
 OrderedCollections = "1.8.1"
-PooledArrays = "1.4.3"
 julia = "1.6.7"
 
 [extras]

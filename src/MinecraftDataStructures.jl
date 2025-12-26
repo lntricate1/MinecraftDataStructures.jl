@@ -1,9 +1,8 @@
 module MinecraftDataStructures
 
 using OrderedCollections
-using PooledArrays
 
-export Block, BlockState, AbstractBlockState, CompressedPalettedContainer
+export Block, BlockState, AbstractBlockState
 export block_id, is_air
 
 abstract type AbstractBlockState end
@@ -42,43 +41,5 @@ Base.one(::BlockState) = BlockState("minecraft:stone", LittleDict{String, String
 
 Base.show(io::IO, lr::Block) = print(io, split(lr.id, ":")[end])
 Base.show(io::IO, lr::BlockState) = print(io, split(lr.id, ":")[end])
-
-struct CompressedPalettedContainer{T}
-  palette::Vector{T}
-  data::Array{Int64}
-end
-
-function CompressedPalettedContainer(uncompressed::PooledArray{T}, min_bits::Int64) where T
-  wordsize = max(min_bits, ceil(Int, log2(length(uncompressed.pool))))
-  CompressedPalettedContainer(uncompressed.pool,
-    reinterpret.(Int64, BitArray((n - 1) >>> i & 1 == 1 for n in uncompressed.refs for i in 0:wordsize - 1).chunks))
-end
-
-function PooledArray(compressed::CompressedPalettedContainer{T}, min_bits::Int64, length::Int) where T
-  return PooledArray(compressed, min_bits, (length,))
-end
-
-function PooledArray(compressed::CompressedPalettedContainer{T}, min_bits::Int64, size::NTuple{N, Int}) where {N, T}
-  @inbounds begin
-  wordsize = max(min_bits, ceil(Int, log2(length(compressed.palette))))
-  data = ones(UInt32, size)
-  shift = 0
-  j = 1
-  mask = 2^wordsize - 1
-  for i in 1:prod(size)
-    data[i] += (compressed.data[j] >>> shift) & mask
-    if shift + wordsize > 64
-      data[i] += (compressed.data[j += 1] >>> (shift - 64)) & mask
-      shift = shift + wordsize - 64
-    elseif shift + wordsize == 64
-      j += 1
-      shift = 0
-    else
-      shift += wordsize
-    end
-  end
-  # TODO: find a way to directly set the PooledArray
-  return PooledArray(PooledArrays.RefArray(data), Dict(b => UInt32(i) for (i, b) in enumerate(compressed.palette)), compressed.palette, Threads.Atomic{Int64}(1))
-end end
 
 end
